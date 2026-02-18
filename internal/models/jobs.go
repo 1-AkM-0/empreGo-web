@@ -78,3 +78,22 @@ func (jm *JobModel) GetJobs() ([]Job, error) {
 	}
 	return jobs, nil
 }
+
+func (jm *JobModel) Exists(link string) bool {
+	var exists int
+	stmt := `
+	SELECT 1 from jobs
+	WHERE link = ?
+	LIMIT 1
+	`
+	err := jm.DB.QueryRow(stmt, link).Scan(&exists)
+	if err == sql.ErrNoRows {
+		return false
+	}
+	if err != nil {
+		fmt.Println("JobModel exists:", err)
+		return true
+	}
+	return true
+
+}
