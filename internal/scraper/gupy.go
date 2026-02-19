@@ -38,6 +38,9 @@ func SearchGupy(jobChannel chan models.Job) error {
 	}
 
 	for _, result := range gupyResponse.Data {
+		if !(isTechInternship(result.Title)) {
+			continue
+		}
 		jobToInsert := models.Job{
 			Title:  result.Title,
 			Link:   result.Link,

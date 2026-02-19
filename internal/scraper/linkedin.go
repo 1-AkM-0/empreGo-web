@@ -41,6 +41,9 @@ func SearchLinkedin(jobChannel chan models.Job) error {
 
 	doc.Find("ul.jobs-search__results-list > li").Each(func(i int, s *goquery.Selection) {
 		title := strings.TrimSpace(s.Find("h3.base-search-card__title").Text())
+		if !(isTechInternship(title)) {
+			return
+		}
 		link, exists := (s.Find("a.base-card__full-link").Attr("href"))
 		u, err := url.Parse(link)
 		if err != nil {
