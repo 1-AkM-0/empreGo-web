@@ -10,10 +10,11 @@ import (
 
 func Open() (*sql.DB, error) {
 
-	db, err := sql.Open("sqlite", "vagas.db")
+	db, err := sql.Open("sqlite", "vagas.db?_pragma=journal_mode(WAL)&_busy_timeout=5000")
 	if err != nil {
 		return nil, fmt.Errorf("db open: %w", err)
 	}
+
 	fmt.Println("Conectado ao database")
 	return db, nil
 }
