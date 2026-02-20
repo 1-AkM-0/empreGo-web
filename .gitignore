@@ -31,3 +31,5 @@ vagas.db
 # Editor/IDE
 # .idea/
 # .vscode/
+vagas.*
+run.sh
