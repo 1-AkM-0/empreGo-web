@@ -4,8 +4,10 @@ import (
 	"context"
 	"database/sql"
 	"errors"
-	"strings"
 	"time"
+
+	"github.com/google/uuid"
+	"github.com/markbates/goth"
 )
 
 var (
@@ -25,12 +27,10 @@ type UserModel struct {
 	DB *sql.DB
 }
 
-func (um UserModel) UpsertGithub(user *User) error {
+func (um UserModel) InsertGithub(user *User) error {
 	stmt := `
 	INSERT INTO users (id, email, username, github_id)
 	VALUES (?, ?, ?, ?)
-	ON CONFLICT(github_id) DO NOTHING
-	RETURNING id; 
 	`
 
 	args := []any{user.ID, user.Email, user.Username, user.GithubID}
@@ -38,12 +38,66 @@ func (um UserModel) UpsertGithub(user *User) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
 
-	err := um.DB.QueryRowContext(ctx, stmt, args...).Scan(&user.ID)
+	_, err := um.DB.ExecContext(ctx, stmt, args...)
 	if err != nil {
-		if strings.Contains(err.Error(), "UNIQUE constraint failed: users.email") {
-			return ErrDuplicateEmail
-		}
 		return err
 	}
+
 	return nil
+}
+
+func (um UserModel) GetByGithubID(id string) (*User, error) {
+	stmt := `
+	SELECT id, email, username, github_id 
+	FROM users
+	WHERE github_id = ?
+	`
+	var user User
+	args := []any{&user.ID, &user.Email, &user.Username, &user.GithubID}
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
+	err := um.DB.QueryRowContext(ctx, stmt, id).Scan(args...)
+	if err != nil {
+		switch {
+		case errors.Is(err, sql.ErrNoRows):
+			return nil, ErrNoRecords
+		default:
+			return nil, err
+		}
+	}
+	return &user, nil
+
+}
+
+func (um UserModel) GetOrCreateGithubUser(ghUser goth.User) (string, error) {
+	var internalID string
+	stmt := `
+	SELECT id from users
+	WHERE github_id = ?
+	`
+
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
+	err := um.DB.QueryRowContext(ctx, stmt, ghUser.UserID).Scan(&internalID)
+	if err != nil && err != sql.ErrNoRows {
+		return "", err
+	}
+	if err == nil {
+		return internalID, nil
+	}
+
+	newID := uuid.New().String()
+	insertStmt := `
+	INSERT INTO users (id, username, email, github_id)
+	VALUES (?, ?, ?, ?)
+	`
+	args := []any{newID, ghUser.NickName, ghUser.Email, ghUser.UserID}
+	_, err = um.DB.ExecContext(ctx, insertStmt, args...)
+	if err != nil {
+		return "", err
+	}
+	return newID, nil
+
 }
