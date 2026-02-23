@@ -4,10 +4,8 @@ import (
 	"context"
 	"net/http"
 
-	"github.com/1-AkM-0/empreGo-web/internal/models"
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
-	"github.com/google/uuid"
 	"github.com/markbates/goth/gothic"
 )
 
@@ -25,21 +23,13 @@ func (app *application) authCallbackHandler(c *gin.Context) {
 		return
 	}
 
-	user := models.User{
-		ID:       uuid.New().String(),
-		Username: ghUser.NickName,
-		GithubID: ghUser.UserID,
-		Email:    ghUser.Email,
-	}
-
-	if err := app.Models.UserModel.UpsertGithub(&user); err != nil {
-		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": "erro ao salvar usuário: " + err.Error()})
-		return
+	finalUserID, err := app.Models.UserModel.GetOrCreateGithubUser(ghUser)
+	if err != nil {
+		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": "erro ao tentar procurar usuário"})
 	}
 
 	session := sessions.Default(c)
-
-	session.Set("userID", ghUser.UserID)
+	session.Set("userID", finalUserID)
 
 	if err := session.Save(); err != nil {
 		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": "erro ao salvar sessão"})

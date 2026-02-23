@@ -3,7 +3,6 @@ package main
 import (
 	"os"
 
-	"github.com/1-AkM-0/empreGo-web/internal/auth"
 	"github.com/1-AkM-0/empreGo-web/internal/models"
 	"github.com/1-AkM-0/empreGo-web/internal/storage"
 )
@@ -15,9 +14,8 @@ type config struct {
 }
 
 type application struct {
-	Config       config
-	Models       models.Models
-	TokenManager auth.TokenManager
+	Config config
+	Models models.Models
 }
 
 func main() {
