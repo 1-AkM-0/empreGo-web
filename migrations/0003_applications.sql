@@ -4,7 +4,6 @@
 CREATE TABLE IF NOT EXISTS applications (
 		id TEXT PRIMARY KEY,
 		title TEXT NOT NULL,
-		link TEXT UNIQUE NOT NULL,
     user_id TEXT REFERENCES users(id),
     status TEXT DEFAULT "applied" CHECK ( status IN ("applied", "interview", "approved", "rejected") ) NOT NULL,
     source TEXT NOT NULL,
