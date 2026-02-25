@@ -53,6 +53,7 @@ func SearchLinkedin(jobChannel chan models.Job) error {
 				Title:  title,
 				Link:   link,
 				Source: "linkedin",
+				Type:   findJobType(title),
 			}
 			jobChannel <- job
 		}

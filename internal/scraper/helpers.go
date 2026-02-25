@@ -41,3 +41,20 @@ func isTechInternship(jobTitle string) bool {
 	}
 	return isTech
 }
+
+func findJobType(jobTitle string) string {
+	jobTitle = strings.ToLower(jobTitle)
+	re := regexp.MustCompile(`[\- :,()]`)
+	cleanString := re.ReplaceAllString(jobTitle, " ")
+	for words := range strings.FieldsSeq(cleanString) {
+		switch words {
+		case "backend", "back":
+			return "backend"
+		case "fullstack", "full":
+			return "fullstack"
+		case "frontend", "front":
+			return "frontend"
+		}
+	}
+	return "geral"
+}
