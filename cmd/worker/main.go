@@ -10,12 +10,14 @@ import (
 	"github.com/1-AkM-0/empreGo-web/internal/models"
 	"github.com/1-AkM-0/empreGo-web/internal/scraper"
 	"github.com/1-AkM-0/empreGo-web/internal/storage"
+	"github.com/nats-io/nats.go"
 )
 
 type application struct {
 	Bot      discord.Bot
 	Logger   *slog.Logger
 	JobModel models.JobModel
+	Nc       *nats.Conn
 }
 
 func main() {
@@ -30,10 +32,19 @@ func main() {
 		logger.Error(err.Error())
 		os.Exit(1)
 	}
+
+	natsUrl := nats.DefaultURL
+	nc, err := nats.Connect(natsUrl)
+	if err != nil {
+		logger.Error(err.Error())
+		os.Exit(1)
+	}
+
 	app := &application{
 		Bot:      *bot,
 		Logger:   logger,
 		JobModel: models.JobModel{DB: db},
+		Nc:       nc,
 	}
 
 	app.run()
@@ -43,7 +54,6 @@ func (app *application) run() {
 	app.Logger.Info("Iniciando busca")
 
 	var wg sync.WaitGroup
-	channelID := os.Getenv("CHANNEL_ID")
 	jobChannel := make(chan models.Job, 10)
 
 	sources := []func(jobChannel chan models.Job) error{
@@ -70,9 +80,14 @@ func (app *application) run() {
 		if app.JobModel.Exists(job.Link) {
 			continue
 		}
-		_, err := app.Bot.SendMessage(channelID, "Nova vaga: "+job.Title+"\n"+job.Source+"\n"+job.Link)
+
+		msg := []byte("Nova vaga: " + job.Title + "\n" + "Fonte: " + job.Source + "\n" + job.Link)
+		subject := "vagas." + job.Type
+
+		err := app.Nc.Publish(subject, msg)
 		if err != nil {
 			app.Logger.Error("erro ao tentar enviar vaga: " + err.Error())
+			continue
 		}
 
 		err = app.JobModel.Insert(&job)

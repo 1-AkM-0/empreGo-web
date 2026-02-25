@@ -45,6 +45,7 @@ func SearchGupy(jobChannel chan models.Job) error {
 			Title:  result.Title,
 			Link:   result.Link,
 			Source: "gupy",
+			Type:   findJobType(result.Title),
 		}
 		jobChannel <- jobToInsert
 	}
