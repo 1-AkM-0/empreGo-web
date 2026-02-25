@@ -3,7 +3,6 @@ package scraper
 import (
 	"fmt"
 	"net/http"
-	"net/url"
 	"strings"
 	"time"
 
@@ -12,7 +11,7 @@ import (
 )
 
 func SearchLinkedin(jobChannel chan models.Job) error {
-	rawUrl := "https://www.linkedin.com/jobs/search?keywords=%22est%C3%A1gio%22%20OR%20%22estagi%C3%A1rio%22&location=Brasil&geoId=106057199&f_TPR=r86400&f_WT=2&position=1&pageNum=0&currentJobId=4373363527"
+	rawUrl := "https://www.linkedin.com/jobs/search?keywords=%22est%C3%A1gio%22%20OR%20%22estagi%C3%A1rio%22%20OR%20%22intern%22%20OR%20%22internship%22&location=Brasil&geoId=106057199&f_TPR=r86400&f_WT=2&position=1&pageNum=0"
 	method := "GET"
 
 	client := http.Client{Timeout: 30 * time.Second}
@@ -41,16 +40,13 @@ func SearchLinkedin(jobChannel chan models.Job) error {
 
 	doc.Find("ul.jobs-search__results-list > li").Each(func(i int, s *goquery.Selection) {
 		title := strings.TrimSpace(s.Find("h3.base-search-card__title").Text())
+
 		if !(isTechInternship(title)) {
 			return
 		}
-		link, exists := (s.Find("a.base-card__full-link").Attr("href"))
-		u, err := url.Parse(link)
-		if err != nil {
-			return
-		}
-		u.RawQuery = ""
-		link = u.String()
+
+		jobID, exists := (s.Find("div.base-card").Attr("data-entity-urn"))
+		link := "https://br.linkedin.com/jobs/view/" + strings.Trim(jobID, "urn:li:jobPosting:")
 
 		if title != "" && exists {
 			job := models.Job{
