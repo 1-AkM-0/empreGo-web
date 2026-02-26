@@ -11,6 +11,12 @@ import (
 	"github.com/nats-io/nats.go"
 )
 
+type application struct {
+	bot    *discord.Bot
+	nc     *nats.Conn
+	logger *slog.Logger
+}
+
 func main() {
 	url := nats.DefaultURL
 
@@ -39,23 +45,13 @@ func main() {
 		}
 	}()
 
-	discordChannels := map[string]string{
-		"vagas.fullstack": "1475567878240473129",
-		"vagas.backend":   "1475567813149200394",
-		"vagas.frontend":  "1475567850541289595",
-		"vagas.geral":     "1476258634047688826"}
-
-	for topic, channelID := range discordChannels {
-		_, err = nc.Subscribe(topic, func(msg *nats.Msg) {
-			_, err := bot.SendMessage(channelID, string(msg.Data))
-			if err != nil {
-				logger.Error("erro ao enviar vaga", "error", err.Error())
-			}
-		})
-		if err != nil {
-			logger.Error("erro ao inscrever-se no canal", "error", err.Error())
-		}
+	app := &application{
+		bot:    bot,
+		nc:     nc,
+		logger: logger,
 	}
+
+	app.listen()
 
 	fmt.Println("Listening on [vagas.*]")
 
@@ -64,4 +60,25 @@ func main() {
 	<-stopChan
 
 	fmt.Println("desligando subscriber")
+}
+
+func (app *application) listen() {
+
+	discordChannels := map[string]string{
+		"vagas.fullstack": "1475567878240473129",
+		"vagas.backend":   "1475567813149200394",
+		"vagas.frontend":  "1475567850541289595",
+		"vagas.geral":     "1476258634047688826"}
+
+	for topic, channelID := range discordChannels {
+		_, err := app.nc.Subscribe(topic, func(msg *nats.Msg) {
+			_, err := app.bot.SendMessage(channelID, string(msg.Data))
+			if err != nil {
+				app.logger.Error("erro ao enviar vaga", "error", err.Error())
+			}
+		})
+		if err != nil {
+			app.logger.Error("erro ao inscrever-se no canal", "error", err.Error())
+		}
+	}
 }
