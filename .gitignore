@@ -33,3 +33,4 @@ vagas.db
 # .vscode/
 vagas.*
 run.sh
+subscriber.sh
