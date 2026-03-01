@@ -26,6 +26,7 @@ func (app *application) authCallbackHandler(c *gin.Context) {
 	finalUserID, err := app.Models.UserModel.GetOrCreateGithubUser(ghUser)
 	if err != nil {
 		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": "erro ao tentar procurar usuário"})
+		return
 	}
 
 	session := sessions.Default(c)
@@ -35,8 +36,8 @@ func (app *application) authCallbackHandler(c *gin.Context) {
 		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": "erro ao salvar sessão"})
 		return
 	}
-
-	c.Redirect(http.StatusFound, "/v1/jobs")
+	session.Save()
+	c.Redirect(http.StatusFound, "http://localhost:5173")
 
 }
 
@@ -58,4 +59,14 @@ func (app *application) logoutHandler(c *gin.Context) {
 	gothic.Logout(c.Writer, c.Request)
 
 	c.JSON(http.StatusOK, gin.H{"message": "você saiu com sucesso"})
+}
+
+func (app *application) getMeHandler(c *gin.Context) {
+	sessions := sessions.Default(c)
+	userID := sessions.Get("userID")
+	if userID == nil {
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": "acesso não autorizado"})
+		return
+	}
+	c.JSON(http.StatusOK, userID)
 }

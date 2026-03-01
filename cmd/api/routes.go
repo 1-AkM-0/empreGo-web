@@ -2,6 +2,7 @@ package main
 
 import (
 	"github.com/1-AkM-0/empreGo-web/internal/auth"
+	"github.com/gin-contrib/cors"
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
 )
@@ -9,7 +10,17 @@ import (
 func (app *application) routes() *gin.Engine {
 	store := auth.Setup(app.Config.githubClientID, app.Config.githubClientSecret, app.Config.sessionSecret)
 	router := gin.Default()
+
 	router.Use(sessions.Sessions("session", store))
+
+	router.Use(cors.New(cors.Config{
+		AllowOrigins:     []string{"http://localhost:5173"},
+		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"},
+		AllowHeaders:     []string{"Origin", "Content-Type"},
+		ExposeHeaders:    []string{"Content-Length"},
+		AllowCredentials: true,
+	}))
+
 	v1 := router.Group("/v1")
 	{
 		v1.GET("/healthcheck", app.healthCheckHandler)
@@ -23,6 +34,7 @@ func (app *application) routes() *gin.Engine {
 			auth.GET("/:provider/callback", app.authCallbackHandler)
 			auth.GET("/:provider", app.authBeginHandler)
 			auth.POST("/logout", app.logoutHandler)
+			auth.GET("/me", app.getMeHandler)
 		}
 		application := v1.Group("/application")
 		{
