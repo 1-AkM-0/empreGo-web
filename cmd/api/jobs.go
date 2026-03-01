@@ -46,4 +46,3 @@ func (app *application) getAllJobsHandler(c *gin.Context) {
 	}
 	c.JSON(http.StatusOK, jobs)
 }
-
