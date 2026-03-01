@@ -10,8 +10,9 @@ var (
 )
 
 type Models struct {
-	UserModel UserModel
-	JobModel  JobModel
+	UserModel        UserModel
+	JobModel         JobModel
+	ApplicationModel ApplicationModel
 }
 
 func NewModels(db *sql.DB) Models {
@@ -20,6 +21,9 @@ func NewModels(db *sql.DB) Models {
 			DB: db,
 		},
 		UserModel: UserModel{
+			DB: db,
+		},
+		ApplicationModel: ApplicationModel{
 			DB: db,
 		},
 	}
