@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"fmt"
 	"time"
 
 	"github.com/google/uuid"
@@ -15,12 +16,12 @@ var (
 )
 
 type User struct {
-	ID        string    `json:"id"`
-	Email     string    `json:"email"`
-	Username  string    `json:"username"`
-	GithubID  string    `json:"github_id"`
-	CreatedAt time.Time `json:"created_at"`
-	UpdatedAt time.Time `json:"updated_at"`
+	ID        string `json:"id"`
+	Email     string `json:"email"`
+	Username  string `json:"username"`
+	GithubID  string `json:"github_id"`
+	CreatedAt string `json:"created_at"`
+	UpdatedAt string `json:"updated_at"`
 }
 
 type UserModel struct {
@@ -46,11 +47,11 @@ func (um UserModel) InsertGithub(user *User) error {
 	return nil
 }
 
-func (um UserModel) GetByGithubID(id string) (*User, error) {
+func (um UserModel) GetByID(id string) (*User, error) {
 	stmt := `
 	SELECT id, email, username, github_id 
 	FROM users
-	WHERE github_id = ?
+	WHERE id = ?
 	`
 	var user User
 	args := []any{&user.ID, &user.Email, &user.Username, &user.GithubID}
@@ -85,6 +86,8 @@ func (um UserModel) GetOrCreateGithubUser(ghUser goth.User) (string, error) {
 		return "", err
 	}
 	if err == nil {
+		fmt.Printf("retornando id existente: %s", internalID)
+
 		return internalID, nil
 	}
 
@@ -98,6 +101,8 @@ func (um UserModel) GetOrCreateGithubUser(ghUser goth.User) (string, error) {
 	if err != nil {
 		return "", err
 	}
+
+	fmt.Printf("retornando novo id: %s", internalID)
 	return newID, nil
 
 }

@@ -7,9 +7,6 @@ ALTER TABLE applications
 ALTER TABLE applications 
   DROP COLUMN source;
 
-ALTER TABLE applications
-  ADD COLUMN job_id INT REFERENCES jobs(id);
-
 -- +goose StatementEnd
 
 -- +goose Down

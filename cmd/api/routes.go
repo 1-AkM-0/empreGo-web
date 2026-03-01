@@ -2,6 +2,7 @@ package main
 
 import (
 	"github.com/1-AkM-0/empreGo-web/internal/auth"
+	"github.com/1-AkM-0/empreGo-web/internal/middleware"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
@@ -33,15 +34,15 @@ func (app *application) routes() *gin.Engine {
 		{
 			auth.GET("/:provider/callback", app.authCallbackHandler)
 			auth.GET("/:provider", app.authBeginHandler)
-			auth.POST("/logout", app.logoutHandler)
+			auth.POST("/logout", middleware.RequireAuth(app.Models.UserModel), app.logoutHandler)
 			auth.GET("/me", app.getMeHandler)
 		}
-		application := v1.Group("/application")
+		application := v1.Group("/applications")
 		{
-			application.GET("/")
+			application.GET("/", middleware.RequireAuth(app.Models.UserModel), app.getApplicationsHandler)
 			application.GET("/:id")
-			application.POST("/")
-			application.PATCH("/:id")
+			application.POST("/", middleware.RequireAuth(app.Models.UserModel), app.createApplicationHandler)
+			application.PATCH("/:id", middleware.RequireAuth(app.Models.UserModel), app.updateApplicationHandler)
 			application.DELETE("/:id")
 
 		}

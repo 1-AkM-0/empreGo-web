@@ -36,7 +36,7 @@ func (app *application) authCallbackHandler(c *gin.Context) {
 		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": "erro ao salvar sessão"})
 		return
 	}
-	session.Save()
+
 	c.Redirect(http.StatusFound, "http://localhost:5173")
 
 }
