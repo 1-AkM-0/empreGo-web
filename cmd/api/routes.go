@@ -1,6 +1,8 @@
 package main
 
 import (
+	"os"
+
 	"github.com/1-AkM-0/empreGo-web/internal/auth"
 	"github.com/1-AkM-0/empreGo-web/internal/middleware"
 	"github.com/gin-contrib/cors"
@@ -15,7 +17,7 @@ func (app *application) routes() *gin.Engine {
 	router.Use(sessions.Sessions("session", store))
 
 	router.Use(cors.New(cors.Config{
-		AllowOrigins:     []string{"http://localhost:5173"},
+		AllowOrigins:     []string{os.Getenv("FRONT_URL")},
 		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"},
 		AllowHeaders:     []string{"Origin", "Content-Type"},
 		ExposeHeaders:    []string{"Content-Length"},
