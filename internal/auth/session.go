@@ -2,6 +2,7 @@ package auth
 
 import (
 	"net/http"
+	"os"
 
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-contrib/sessions/cookie"
@@ -25,7 +26,7 @@ func Setup(githubClientID, githubClientSecret, sessionSecret string) cookie.Stor
 	})
 
 	goth.UseProviders(
-		github.New(githubClientID, githubClientSecret, "http://localhost:8080/v1/auth/github/callback", "user:email"),
+		github.New(githubClientID, githubClientSecret, os.Getenv("DOMAIN")+"/v1/auth/github/callback", "user:email"),
 	)
 
 	return store

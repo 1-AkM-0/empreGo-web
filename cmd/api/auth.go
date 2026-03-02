@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"net/http"
+	"os"
 
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
@@ -37,7 +38,7 @@ func (app *application) authCallbackHandler(c *gin.Context) {
 		return
 	}
 
-	c.Redirect(http.StatusFound, "http://localhost:5173")
+	c.Redirect(http.StatusFound, os.Getenv("FRONT_URL"))
 
 }
 
