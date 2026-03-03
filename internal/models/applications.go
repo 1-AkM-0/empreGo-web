@@ -25,6 +25,7 @@ type ApplicationResponse struct {
 	ApplicationStatus    string `json:"status"`
 	JobType              string `json:"job_type"`
 	JobSource            string `json:"job_source"`
+	JobCompany           string `json:"job_company"`
 	ApplicationCreatedAt string `json:"application_created_at"`
 }
 
@@ -49,7 +50,7 @@ func (am ApplicationModel) Insert(application *Application) error {
 
 func (am ApplicationModel) GetAll(userID string) ([]ApplicationResponse, error) {
 	stmt := `
-	SELECT a.id, j.title, j.link, j.source, a.created_at, j.type, a.status
+	SELECT a.id, j.title, j.link, j.source, a.created_at, j.type, a.status, j.company
   FROM applications AS a 
   JOIN jobs AS j
   ON j.id = a.job_id
@@ -80,6 +81,7 @@ func (am ApplicationModel) GetAll(userID string) ([]ApplicationResponse, error) 
 			&applicationResponse.ApplicationCreatedAt,
 			&applicationResponse.JobType,
 			&applicationResponse.ApplicationStatus,
+			&applicationResponse.JobCompany,
 		)
 		if err != nil {
 			return nil, err
@@ -90,7 +92,6 @@ func (am ApplicationModel) GetAll(userID string) ([]ApplicationResponse, error) 
 	return applications, nil
 }
 
-// func (am ApplicationModel) Delete(applicationID string) error
 func (am ApplicationModel) Update(userID, status, applicationID string) error {
 	stmt := `
 	UPDATE applications
@@ -116,5 +117,3 @@ func (am ApplicationModel) Update(userID, status, applicationID string) error {
 	}
 	return nil
 }
-
-//func (am ApplicationModel) GetApplicationByID(applicationID string) (*Application, error)

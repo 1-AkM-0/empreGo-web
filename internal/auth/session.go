@@ -20,13 +20,13 @@ func Setup(githubClientID, githubClientSecret, sessionSecret string) cookie.Stor
 	store.Options(sessions.Options{
 		Path:     "/",
 		HttpOnly: true,
-		Secure:   false,
-		SameSite: http.SameSiteLaxMode,
+		Secure:   true,
+		SameSite: http.SameSiteNoneMode,
 		MaxAge:   86400 * 7,
 	})
 
 	goth.UseProviders(
-		github.New(githubClientID, githubClientSecret, os.Getenv("DOMAIN")+"/v1/auth/github/callback", "user:email"),
+		github.New(githubClientID, githubClientSecret, os.Getenv("CALLBACK"), "user:email"),
 	)
 
 	return store

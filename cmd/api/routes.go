@@ -29,7 +29,7 @@ func (app *application) routes() *gin.Engine {
 		v1.GET("/healthcheck", app.healthCheckHandler)
 		jobs := v1.Group("/jobs")
 		{
-			jobs.GET("/", app.getAllJobsHandler)
+			jobs.GET("", app.getAllJobsHandler)
 			jobs.GET("/:id", app.getJobByIDHandler)
 		}
 		auth := v1.Group("/auth")
@@ -41,9 +41,9 @@ func (app *application) routes() *gin.Engine {
 		}
 		application := v1.Group("/applications")
 		{
-			application.GET("/", middleware.RequireAuth(app.Models.UserModel), app.getApplicationsHandler)
+			application.GET("", middleware.RequireAuth(app.Models.UserModel), app.getApplicationsHandler)
 			application.GET("/:id")
-			application.POST("/", middleware.RequireAuth(app.Models.UserModel), app.createApplicationHandler)
+			application.POST("", middleware.RequireAuth(app.Models.UserModel), app.createApplicationHandler)
 			application.PATCH("/:id", middleware.RequireAuth(app.Models.UserModel), app.updateApplicationHandler)
 			application.DELETE("/:id")
 

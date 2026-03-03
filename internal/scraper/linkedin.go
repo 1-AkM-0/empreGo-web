@@ -47,13 +47,15 @@ func SearchLinkedin(jobChannel chan models.Job) error {
 
 		jobID, exists := (s.Find("div.base-card").Attr("data-entity-urn"))
 		link := "https://br.linkedin.com/jobs/view/" + strings.Trim(jobID, "urn:li:jobPosting:")
+		company := strings.TrimSpace(s.Find("a.hidden-nested-link").Text())
 
 		if title != "" && exists {
 			job := models.Job{
-				Title:  title,
-				Link:   link,
-				Source: "linkedin",
-				Type:   findJobType(title),
+				Title:   title,
+				Link:    link,
+				Source:  "linkedin",
+				Type:    findJobType(title),
+				Company: company,
 			}
 			jobChannel <- job
 		}

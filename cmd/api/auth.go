@@ -26,7 +26,7 @@ func (app *application) authCallbackHandler(c *gin.Context) {
 
 	finalUserID, err := app.Models.UserModel.GetOrCreateGithubUser(ghUser)
 	if err != nil {
-		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": "erro ao tentar procurar usuário"})
+		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": "erro ao tentar procurar usuário: " + err.Error()})
 		return
 	}
 

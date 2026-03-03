@@ -10,6 +10,7 @@ type Job struct {
 	Title     string `json:"title"`
 	Link      string `json:"link"`
 	Type      string `json:"type"`
+	Company   string `json:"company"`
 	Source    string `json:"source"`
 	CreatedAt string `json:"created_at"`
 	UpdatedAt string `json:"updated_at"`
@@ -21,11 +22,11 @@ type JobModel struct {
 
 func (jm *JobModel) Insert(job *Job) error {
 	stmt := `
-	INSERT INTO jobs (title, link,  source, type)
-	VALUES (?, ?, ?, ?);
+	INSERT INTO jobs (title, link,  source, type, company)
+	VALUES (?, ?, ?, ?, ?);
 	`
 
-	args := []any{job.Title, job.Link, job.Source, job.Type}
+	args := []any{job.Title, job.Link, job.Source, job.Type, job.Company}
 
 	_, err := jm.DB.Exec(stmt, args...)
 	if err != nil {
@@ -54,8 +55,9 @@ func (jm *JobModel) GetJobByID(id int) (*Job, error) {
 
 func (jm *JobModel) GetJobs() ([]Job, error) {
 	stmt := `
-	SELECT id, title, link, source, type, created_at
-	FROM jobs;
+	SELECT id, title, link, source, type, created_at, company
+	FROM jobs
+	ORDER BY created_at DESC;
 	`
 
 	rows, err := jm.DB.Query(stmt)
@@ -68,7 +70,7 @@ func (jm *JobModel) GetJobs() ([]Job, error) {
 
 	for rows.Next() {
 		var job Job
-		args := []any{&job.ID, &job.Title, &job.Link, &job.Source, &job.Type, &job.CreatedAt}
+		args := []any{&job.ID, &job.Title, &job.Link, &job.Source, &job.Type, &job.CreatedAt, &job.Company}
 
 		if err := rows.Scan(args...); err != nil {
 			return nil, err
