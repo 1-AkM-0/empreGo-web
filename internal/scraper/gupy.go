@@ -11,8 +11,9 @@ import (
 
 type gupyJobs struct {
 	Data []struct {
-		Title string `json:"name"`
-		Link  string `json:"jobUrl"`
+		Title   string `json:"name"`
+		Link    string `json:"jobUrl"`
+		Company string `json:"careerPageName"`
 	} `json:"data"`
 }
 
@@ -42,10 +43,11 @@ func SearchGupy(jobChannel chan models.Job) error {
 			continue
 		}
 		jobToInsert := models.Job{
-			Title:  result.Title,
-			Link:   result.Link,
-			Source: "gupy",
-			Type:   findJobType(result.Title),
+			Title:   result.Title,
+			Link:    result.Link,
+			Source:  "gupy",
+			Type:    findJobType(result.Title),
+			Company: result.Company,
 		}
 		jobChannel <- jobToInsert
 	}
