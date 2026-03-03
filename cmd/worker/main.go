@@ -6,7 +6,6 @@ import (
 	"os"
 	"sync"
 
-	"github.com/1-AkM-0/empreGo-web/internal/discord"
 	"github.com/1-AkM-0/empreGo-web/internal/models"
 	"github.com/1-AkM-0/empreGo-web/internal/scraper"
 	"github.com/1-AkM-0/empreGo-web/internal/storage"
@@ -14,7 +13,6 @@ import (
 )
 
 type application struct {
-	Bot      discord.Bot
 	Logger   *slog.Logger
 	JobModel models.JobModel
 	Nc       *nats.Conn
@@ -22,11 +20,7 @@ type application struct {
 
 func main() {
 	logger := slog.New(slog.NewTextHandler(os.Stdout, nil))
-	bot, err := discord.NewBot(os.Getenv("BOT_TOKEN"))
-	if err != nil {
-		logger.Error(err.Error())
-		os.Exit(1)
-	}
+
 	db, err := storage.Open()
 	if err != nil {
 		logger.Error(err.Error())
@@ -41,7 +35,6 @@ func main() {
 	}
 
 	app := &application{
-		Bot:      *bot,
 		Logger:   logger,
 		JobModel: models.JobModel{DB: db},
 		Nc:       nc,
