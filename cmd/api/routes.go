@@ -15,6 +15,7 @@ func (app *application) routes() *gin.Engine {
 	router := gin.Default()
 
 	router.Use(sessions.Sessions("session", store))
+	router.Use(middleware.RateLimiter())
 
 	router.Use(cors.New(cors.Config{
 		AllowOrigins:     []string{os.Getenv("FRONT_URL")},
