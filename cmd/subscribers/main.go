@@ -65,10 +65,10 @@ func main() {
 func (app *application) listen() {
 
 	discordChannels := map[string]string{
-		"vagas.fullstack": "1475567878240473129",
-		"vagas.backend":   "1475567813149200394",
-		"vagas.frontend":  "1475567850541289595",
-		"vagas.geral":     "1476258634047688826"}
+		"vagas.fullstack": "1474431327469305882",
+		"vagas.backend":   "1474455713794494576",
+		"vagas.frontend":  "1474455764914536491",
+		"vagas.geral":     "1474455848368607294"}
 
 	for topic, channelID := range discordChannels {
 		_, err := app.nc.Subscribe(topic, func(msg *nats.Msg) {
