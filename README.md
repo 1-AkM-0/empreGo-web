@@ -1,4 +1,4 @@
-# empreGo
+# empreGo-web
 
 Plataforma agregadora e gerenciadora de vagas de estágio em tecnologia, com notificações em tempo real via Discord.
 
@@ -8,8 +8,12 @@ Plataforma agregadora e gerenciadora de vagas de estágio em tecnologia, com not
 
 ## Screenshots
 
-![Home com as vagas](./assets/vagas.png)
-![Candidaturas exemplo](./assets/candidaturas.png)
+Home 
+<img width="1366" height="768" alt="vagas" src="https://github.com/user-attachments/assets/a1d3ecad-5153-481e-84d0-561085adff7b" />
+
+Candidaturas Exemplo
+<img width="1366" height="768" alt="candidaturas" src="https://github.com/user-attachments/assets/d7a66701-206e-4f1f-8ed2-724ba2daeb94" />
+
 
 ---
 
