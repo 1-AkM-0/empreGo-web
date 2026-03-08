@@ -1,8 +1,12 @@
 package models
 
 import (
+	"context"
 	"database/sql"
 	"fmt"
+	"time"
+
+	"github.com/1-AkM-0/empreGo-web/internal/pagination"
 )
 
 type Job struct {
@@ -25,10 +29,12 @@ func (jm *JobModel) Insert(job *Job) error {
 	INSERT INTO jobs (title, link,  source, type, company)
 	VALUES (?, ?, ?, ?, ?);
 	`
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
 
 	args := []any{job.Title, job.Link, job.Source, job.Type, job.Company}
 
-	_, err := jm.DB.Exec(stmt, args...)
+	_, err := jm.DB.ExecContext(ctx, stmt, args...)
 	if err != nil {
 		return fmt.Errorf("job model insert: %w", err)
 	}
@@ -43,9 +49,12 @@ func (jm *JobModel) GetJobByID(id int) (*Job, error) {
 	`
 	var job Job
 
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
 	args := []any{&job.ID, &job.Title, &job.Link, &job.Source, &job.Type, &job.CreatedAt}
 
-	err := jm.DB.QueryRow(stmt, id).Scan(args...)
+	err := jm.DB.QueryRowContext(ctx, stmt, id).Scan(args...)
 	if err != nil {
 		return nil, err
 	}
@@ -53,31 +62,38 @@ func (jm *JobModel) GetJobByID(id int) (*Job, error) {
 	return &job, nil
 }
 
-func (jm *JobModel) GetJobs() ([]Job, error) {
+func (jm *JobModel) GetJobs(filter pagination.Filter) ([]Job, pagination.Metadata, error) {
 	stmt := `
-	SELECT id, title, link, source, type, created_at, company
+	SELECT COUNT(*) OVER(), id, title, link, source, type, created_at, company
 	FROM jobs
-	ORDER BY created_at DESC;
+	ORDER BY created_at DESC
+	LIMIT ? OFFSET ?;
 	`
 
-	rows, err := jm.DB.Query(stmt)
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
+	rows, err := jm.DB.QueryContext(ctx, stmt, filter.Limit(), filter.Offset())
 	if err != nil {
-		return nil, fmt.Errorf("job model getjobs: %w", err)
+		return nil, pagination.Metadata{}, fmt.Errorf("job model getjobs: %w", err)
 	}
 	defer rows.Close()
 
+	totalRecords := 0
 	var jobs []Job
 
 	for rows.Next() {
 		var job Job
-		args := []any{&job.ID, &job.Title, &job.Link, &job.Source, &job.Type, &job.CreatedAt, &job.Company}
+		args := []any{&totalRecords, &job.ID, &job.Title, &job.Link, &job.Source, &job.Type, &job.CreatedAt, &job.Company}
 
 		if err := rows.Scan(args...); err != nil {
-			return nil, err
+			return nil, pagination.Metadata{}, err
 		}
 		jobs = append(jobs, job)
 	}
-	return jobs, nil
+
+	metadata := pagination.CalculateMetada(totalRecords, filter.Page, filter.PageSize)
+	return jobs, metadata, nil
 }
 
 func (jm *JobModel) Exists(link string) bool {

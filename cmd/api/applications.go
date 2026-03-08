@@ -2,16 +2,16 @@ package main
 
 import (
 	"errors"
-	"fmt"
 	"net/http"
 
 	"github.com/1-AkM-0/empreGo-web/internal/models"
+	"github.com/1-AkM-0/empreGo-web/internal/pagination"
+	"github.com/1-AkM-0/empreGo-web/internal/validator"
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
 )
 
 func (app *application) createApplicationHandler(c *gin.Context) {
-	fmt.Println("chegou no handler")
 	session := sessions.Default(c)
 
 	input := struct {
@@ -25,7 +25,7 @@ func (app *application) createApplicationHandler(c *gin.Context) {
 	}
 
 	if err := c.ShouldBindJSON(&input); err != nil {
-		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": "erro na requisição: " + err.Error()})
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": "erro na requisição"})
 		return
 	}
 
@@ -36,7 +36,7 @@ func (app *application) createApplicationHandler(c *gin.Context) {
 
 	err := app.Models.ApplicationModel.Insert(&application)
 	if err != nil {
-		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": "erro ao inserir application"})
 		return
 	}
 
@@ -51,13 +51,29 @@ func (app *application) getApplicationsHandler(c *gin.Context) {
 		return
 	}
 
-	application, err := app.Models.ApplicationModel.GetAll(userID)
+	var input struct {
+		pagination.Filter
+	}
+
+	v := validator.New()
+
+	qs := c.Request.URL.Query()
+
+	input.Page = app.readInt(qs, "page", 1, v)
+	input.PageSize = app.readInt(qs, "page_size", 6, v)
+
+	if pagination.ValidateFilter(v, input.Filter); !v.Valid() {
+		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": v.Errors})
+		return
+	}
+
+	applications, metadata, err := app.Models.ApplicationModel.GetAll(userID, input.Filter)
 	if err != nil {
 		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": "erro ao retornar candidaturas"})
 		return
 	}
 
-	c.JSON(http.StatusOK, application)
+	c.JSON(http.StatusOK, envelope{"applications": applications, "metadata": metadata})
 
 }
 
@@ -71,7 +87,7 @@ func (app *application) updateApplicationHandler(c *gin.Context) {
 	}{}
 
 	if err := c.ShouldBindJSON(&input); err != nil {
-		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": "erro na requisição: " + err.Error()})
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": "erro na requisição"})
 		return
 	}
 
@@ -83,7 +99,7 @@ func (app *application) updateApplicationHandler(c *gin.Context) {
 			return
 
 		default:
-			c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": "erro: " + err.Error()})
+			c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": "erro ao atualizar candidatura"})
 			return
 		}
 	}
