@@ -6,6 +6,7 @@ import (
 	"errors"
 	"time"
 
+	"github.com/1-AkM-0/empreGo-web/internal/pagination"
 	"github.com/google/uuid"
 )
 
@@ -48,33 +49,39 @@ func (am ApplicationModel) Insert(application *Application) error {
 	return am.DB.QueryRowContext(ctx, stmt, args...).Scan(&application.ID, &application.CreatedAt)
 }
 
-func (am ApplicationModel) GetAll(userID string) ([]ApplicationResponse, error) {
+func (am ApplicationModel) GetAll(userID string, filter pagination.Filter) ([]ApplicationResponse, pagination.Metadata, error) {
 	stmt := `
-	SELECT a.id, j.title, j.link, j.source, a.created_at, j.type, a.status, j.company
+	SELECT COUNT(a.id) OVER(), a.id, j.title, j.link, j.source, a.created_at, j.type, a.status, j.company
   FROM applications AS a 
   JOIN jobs AS j
   ON j.id = a.job_id
-	WHERE a.user_id = ?;
+	WHERE a.user_id = ?
+	ORDER BY a.created_at DESC
+	LIMIT ? OFFSET ?
 	`
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
 
 	applications := []ApplicationResponse{}
 
-	rows, err := am.DB.QueryContext(ctx, stmt, userID)
+	rows, err := am.DB.QueryContext(ctx, stmt, userID, filter.Limit(), filter.Offset())
 	if err != nil {
 		switch {
 		case errors.Is(err, sql.ErrNoRows):
-			return nil, ErrNoRecords
+			return nil, pagination.Metadata{}, ErrNoRecords
 		default:
-			return nil, err
+			return nil, pagination.Metadata{}, err
 		}
 	}
+
+	totalRecords := 0
 
 	for rows.Next() {
 		var applicationResponse ApplicationResponse
 
-		err := rows.Scan(&applicationResponse.ApplicationID,
+		err := rows.Scan(
+			&totalRecords,
+			&applicationResponse.ApplicationID,
 			&applicationResponse.JobTitle,
 			&applicationResponse.JobLink,
 			&applicationResponse.JobSource,
@@ -84,12 +91,14 @@ func (am ApplicationModel) GetAll(userID string) ([]ApplicationResponse, error) 
 			&applicationResponse.JobCompany,
 		)
 		if err != nil {
-			return nil, err
+			return nil, pagination.Metadata{}, err
 		}
 		applications = append(applications, applicationResponse)
 	}
 
-	return applications, nil
+	metadata := pagination.CalculateMetada(totalRecords, filter.Page, filter.PageSize)
+
+	return applications, metadata, nil
 }
 
 func (am ApplicationModel) Update(userID, status, applicationID string) error {

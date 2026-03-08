@@ -20,13 +20,13 @@ func (app *application) authCallbackHandler(c *gin.Context) {
 
 	ghUser, err := gothic.CompleteUserAuth(res, req)
 	if err != nil {
-		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": "falha no login" + err.Error()})
+		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": "falha no login"})
 		return
 	}
 
 	finalUserID, err := app.Models.UserModel.GetOrCreateGithubUser(ghUser)
 	if err != nil {
-		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": "erro ao tentar procurar usuário: " + err.Error()})
+		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": "erro ao tentar procurar usuário"})
 		return
 	}
 
