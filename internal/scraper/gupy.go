@@ -3,8 +3,9 @@ package scraper
 import (
 	"encoding/json"
 	"fmt"
+	"log"
 	"net/http"
-	"time"
+	"sync"
 
 	"github.com/1-AkM-0/empreGo-web/internal/models"
 )
@@ -18,38 +19,53 @@ type gupyJobs struct {
 }
 
 func SearchGupy(jobChannel chan models.Job) error {
-	rawUrl := "https://employability-portal.gupy.io/api/v1/jobs?jobName=est%C3%A1gio&limit=10&offset=0&workplaceType=remote"
-	method := "GET"
+	var wg sync.WaitGroup
 
-	client := &http.Client{Timeout: 30 * time.Second}
-	req, err := http.NewRequest(method, rawUrl, nil)
-	if err != nil {
-		return fmt.Errorf("erro na tentativa de fazer o wrapper do request: %v", err)
+	gupyChannel := make(chan *http.Response, 2)
+
+	rawUrls := []string{"https://employability-portal.gupy.io/api/v1/jobs?jobName=est%C3%A1gio&limit=10&offset=0&workplaceType=remote", "https://employability-portal.gupy.io/api/v1/jobs?jobName=estagi%C3%A1rio&limit=10&offset=0&workplaceType=remote"}
+
+	for _, url := range rawUrls {
+		wg.Go(func() {
+			res, err := http.Get(url)
+			if err != nil {
+				log.Println(err)
+				return
+			}
+			gupyChannel <- res
+		})
 	}
 
-	res, err := client.Do(req)
-	if err != nil {
-		return fmt.Errorf("erro ao fazer o request: %v", err)
-	}
-	defer res.Body.Close()
-	var gupyResponse gupyJobs
-	err = json.NewDecoder(res.Body).Decode(&gupyResponse)
-	if err != nil {
-		return fmt.Errorf("erro ao tentar decodar o json: %v", err)
-	}
+	go func() {
+		wg.Wait()
+		close(gupyChannel)
+	}()
 
-	for _, result := range gupyResponse.Data {
-		if !(isTechInternship(result.Title)) {
-			continue
+	for response := range gupyChannel {
+		gupyResponse := &gupyJobs{}
+
+		err := json.NewDecoder(response.Body).Decode(&gupyResponse)
+		if err != nil {
+			return fmt.Errorf("erro ao tentar decodar o json: %v", err)
 		}
-		jobToInsert := models.Job{
-			Title:   result.Title,
-			Link:    result.Link,
-			Source:  "gupy",
-			Type:    findJobType(result.Title),
-			Company: result.Company,
+
+		err = response.Body.Close()
+		if err != nil {
+			return fmt.Errorf("erro ao fechar o body da requisição Gupy")
 		}
-		jobChannel <- jobToInsert
+		for _, result := range gupyResponse.Data {
+			if !(isTechInternship(result.Title)) {
+				continue
+			}
+			jobToInsert := models.Job{
+				Title:   result.Title,
+				Link:    result.Link,
+				Source:  "gupy",
+				Type:    findJobType(result.Title),
+				Company: result.Company,
+			}
+			jobChannel <- jobToInsert
+		}
 	}
 	return nil
 }
