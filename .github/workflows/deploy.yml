@@ -54,8 +54,8 @@ jobs:
           key: ${{ secrets.VM_SSH_KEY }}
           source: "./bin/*"
           target: "/tmp/deploy-emprego"
-          strip_components: 2
-
+          strip_components: 1
+          
       - name: Troca Rápida e Restart na VM
         uses: appleboy/ssh-action@v1.0.3
         with:
