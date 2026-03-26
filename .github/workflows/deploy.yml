@@ -1,0 +1,85 @@
+name: Deploy EmpreGo-web 
+
+on:
+  workflow_dispatch:
+    inputs:
+      deploy_api:
+        description: 'Fazer deploy da API?'
+        required: true
+        type: boolean
+        default: false
+      deploy_subscriber:
+        description: 'Fazer deploy do Subscriber?'
+        required: true
+        type: boolean
+        default: false
+      deploy_worker:
+        description: 'Fazer deploy do Worker?'
+        required: true
+        type: boolean
+        default: false
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout do código
+        uses: actions/checkout@v4
+
+      - name: Configurar Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.25' 
+
+      - name: Criar pasta temporária
+        run: mkdir -p ./bin
+
+      - name: Build da API
+        if: ${{ inputs.deploy_api }}
+        run: go build -o ./bin/api ./cmd/api 
+
+      - name: Build do Subscriber
+        if: ${{ inputs.deploy_subscriber }}
+        run: go build -o ./bin/subscriber ./cmd/subscribers 
+
+      - name: Build do Worker
+        if: ${{ inputs.deploy_worker }}
+        run: go build -o ./bin/worker ./cmd/worker 
+
+      - name: Enviar executáveis para a VM 
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.VM_HOST }}
+          username: ${{ secrets.VM_USER }}
+          key: ${{ secrets.VM_SSH_KEY }}
+          source: "./bin/*"
+          target: "/tmp/deploy-emprego"
+          strip_components: 1
+
+      - name: Troca Rápida e Restart na VM
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.VM_HOST }}
+          username: ${{ secrets.VM_USER }}
+          key: ${{ secrets.VM_SSH_KEY }}
+          script: |
+            DESTINO="/home/thepe880/empreGo-web"
+            
+            if [ -f /tmp/deploy-emprego/api ]; then
+              mv /tmp/deploy-emprego/api $DESTINO/api
+              chmod +x $DESTINO/api
+              sudo /bin/systemctl restart emprego-api.service
+            fi
+
+            if [ -f /tmp/deploy-emprego/subscriber ]; then
+              mv /tmp/deploy-emprego/subscriber $DESTINO/subscriber
+              chmod +x $DESTINO/subscriber
+              sudo /bin/systemctl restart emprego-subscriber.service
+            fi
+
+            if [ -f /tmp/deploy-emprego/worker ]; then
+              mv /tmp/deploy-emprego/worker $DESTINO/worker
+              chmod +x $DESTINO/worker
+            fi
+
+            rm -rf /tmp/deploy-emprego
