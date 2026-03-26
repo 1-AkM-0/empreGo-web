@@ -46,30 +46,40 @@ jobs:
         if: ${{ inputs.deploy_worker }}
         run: go build -o ./bin/worker ./cmd/worker 
 
-      - name: Enviar executáveis para a VM
+      - name: Enviar executáveis para a VM 
         uses: appleboy/scp-action@v0.1.7
         with:
-          host: ${{ secrets.SSH_HOST }}
-          username: ${{ secrets.SSH_USER }}
-          key: ${{ secrets.SSH_KEY }}
+          host: ${{ secrets.VM_HOST }}
+          username: ${{ secrets.VM_USER }}
+          key: ${{ secrets.VM_SSH_KEY }}
           source: "./bin/*"
-          target: "/home/thepe880/empreGo-web" 
+          target: "/tmp/deploy-emprego"
           strip_components: 2
 
-      - name: Reiniciar API na VM
-        if: ${{ inputs.deploy_api }}
+      - name: Troca Rápida e Restart na VM
         uses: appleboy/ssh-action@v1.0.3
         with:
-          host: ${{ secrets.SSH_HOST }}
-          username: ${{ secrets.SSH_USER }}
-          key: ${{ secrets.SSH_KEY }}
-          script: sudo /bin/systemctl restart emprego-api.service
+          host: ${{ secrets.VM_HOST }}
+          username: ${{ secrets.VM_USER }}
+          key: ${{ secrets.VM_SSH_KEY }}
+          script: |
+            DESTINO="/home/thepe880/empreGo-web"
+            
+            if [ -f /tmp/deploy-emprego/api ]; then
+              mv /tmp/deploy-emprego/api $DESTINO
+              chmod +x $DESTINO/api
+              sudo /bin/systemctl restart emprego-api.service
+            fi
 
-      - name: Reiniciar Subscriber na VM
-        if: ${{ inputs.deploy_subscriber }}
-        uses: appleboy/ssh-action@v1.0.3
-        with:
-          host: ${{ secrets.SSH_HOST }}
-          username: ${{ secrets.SSH_USER }}
-          key: ${{ secrets.SSH_KEY }}
-          script: sudo /bin/systemctl restart emprego-subscriber.service
+            if [ -f /tmp/deploy-emprego/subscriber ]; then
+              mv /tmp/deploy-emprego/subscriber $DESTINO
+              chmod +x $DESTINO/subscriber
+              sudo /bin/systemctl restart emprego-subscriber.service
+            fi
+
+            if [ -f /tmp/deploy-emprego/worker ]; then
+              mv /tmp/deploy-emprego/worker $DESTINO
+              chmod +x $DESTINO/worker
+            fi
+
+            rm -rf /tmp/deploy-emprego
