@@ -54,6 +54,7 @@ func main() {
 	app.listen()
 
 	fmt.Println("Listening on [vagas.*]")
+	fmt.Println("Testando CD")
 
 	stopChan := make(chan os.Signal, 1)
 	signal.Notify(stopChan, syscall.SIGINT, syscall.SIGTERM)
