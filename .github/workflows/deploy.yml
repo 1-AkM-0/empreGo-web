@@ -1,0 +1,75 @@
+name: Deploy EmpreGo-web 
+
+on:
+  workflow_dispatch:
+    inputs:
+      deploy_api:
+        description: 'Fazer deploy da API?'
+        required: true
+        type: boolean
+        default: false
+      deploy_subscriber:
+        description: 'Fazer deploy do Subscriber?'
+        required: true
+        type: boolean
+        default: false
+      deploy_worker:
+        description: 'Fazer deploy do Worker?'
+        required: true
+        type: boolean
+        default: false
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout do código
+        uses: actions/checkout@v4
+
+      - name: Configurar Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.25' 
+
+      - name: Criar pasta temporária
+        run: mkdir -p ./bin
+
+      - name: Build da API
+        if: ${{ inputs.deploy_api }}
+        run: go build -o ./bin/api ./cmd/api 
+
+      - name: Build do Subscriber
+        if: ${{ inputs.deploy_subscriber }}
+        run: go build -o ./bin/subscriber ./cmd/subscriber 
+
+      - name: Build do Worker
+        if: ${{ inputs.deploy_worker }}
+        run: go build -o ./bin/worker ./cmd/worker 
+
+      - name: Enviar executáveis para a VM
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_KEY }}
+          source: "./bin/*"
+          target: "/home/thepe880/empreGo-web" 
+          strip_components: 2
+
+      - name: Reiniciar API na VM
+        if: ${{ inputs.deploy_api }}
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_KEY }}
+          script: sudo /bin/systemctl restart emprego-api.service
+
+      - name: Reiniciar Subscriber na VM
+        if: ${{ inputs.deploy_subscriber }}
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_KEY }}
+          script: sudo /bin/systemctl restart emprego-subscriber.service
