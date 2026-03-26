@@ -40,7 +40,7 @@ jobs:
 
       - name: Build do Subscriber
         if: ${{ inputs.deploy_subscriber }}
-        run: go build -o ./bin/subscriber ./cmd/subscriber 
+        run: go build -o ./bin/subscriber ./cmd/subscribers 
 
       - name: Build do Worker
         if: ${{ inputs.deploy_worker }}
@@ -66,19 +66,19 @@ jobs:
             DESTINO="/home/thepe880/empreGo-web"
             
             if [ -f /tmp/deploy-emprego/api ]; then
-              mv /tmp/deploy-emprego/api $DESTINO
+              mv /tmp/deploy-emprego/api $DESTINO/api
               chmod +x $DESTINO/api
               sudo /bin/systemctl restart emprego-api.service
             fi
 
             if [ -f /tmp/deploy-emprego/subscriber ]; then
-              mv /tmp/deploy-emprego/subscriber $DESTINO
+              mv /tmp/deploy-emprego/subscriber $DESTINO/subscriber
               chmod +x $DESTINO/subscriber
               sudo /bin/systemctl restart emprego-subscriber.service
             fi
 
             if [ -f /tmp/deploy-emprego/worker ]; then
-              mv /tmp/deploy-emprego/worker $DESTINO
+              mv /tmp/deploy-emprego/worker $DESTINO/worker
               chmod +x $DESTINO/worker
             fi
 
