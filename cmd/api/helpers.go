@@ -5,6 +5,8 @@ import (
 	"strconv"
 
 	"github.com/1-AkM-0/empreGo-web/internal/validator"
+	"github.com/gin-contrib/sessions"
+	"github.com/gin-gonic/gin"
 )
 
 type envelope map[string]any
@@ -23,4 +25,14 @@ func (app *application) readInt(qs url.Values, key string, defaultValue int, v *
 	}
 
 	return i
+}
+
+func (app *application) tryExtractUserID(c *gin.Context) string {
+	session := sessions.Default(c)
+
+	userID, ok := session.Get("userID").(string)
+	if ok {
+		return userID
+	}
+	return ""
 }

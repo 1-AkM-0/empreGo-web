@@ -40,6 +40,8 @@ func (app *application) getJobByIDHandler(c *gin.Context) {
 
 func (app *application) getAllJobsHandler(c *gin.Context) {
 
+	userID := app.tryExtractUserID(c)
+
 	var input struct {
 		pagination.Filter
 	}
@@ -51,7 +53,7 @@ func (app *application) getAllJobsHandler(c *gin.Context) {
 	input.Page = app.readInt(qs, "page", 1, v)
 	input.PageSize = app.readInt(qs, "page_size", 6, v)
 
-	jobs, metadata, err := app.Models.JobModel.GetJobs(input.Filter)
+	jobs, metadata, err := app.Models.JobModel.GetJobs(input.Filter, userID)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error": err.Error(),

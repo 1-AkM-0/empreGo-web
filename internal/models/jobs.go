@@ -18,6 +18,7 @@ type Job struct {
 	Source    string `json:"source"`
 	CreatedAt string `json:"created_at"`
 	UpdatedAt string `json:"updated_at"`
+	Applied   int    `json:"applied"`
 }
 
 type JobModel struct {
@@ -62,18 +63,23 @@ func (jm *JobModel) GetJobByID(id int) (*Job, error) {
 	return &job, nil
 }
 
-func (jm *JobModel) GetJobs(filter pagination.Filter) ([]Job, pagination.Metadata, error) {
+func (jm *JobModel) GetJobs(filter pagination.Filter, userID any) ([]Job, pagination.Metadata, error) {
+
 	stmt := `
-	SELECT COUNT(*) OVER(), id, title, link, source, type, created_at, company
-	FROM jobs
-	ORDER BY created_at DESC
+	SELECT COUNT(*) OVER (), j.id, j.title, j.link, j.source, j.type, j.created_at, j.company, 
+      CASE WHEN a.user_id = ? THEN true ELSE false END as applied
+	FROM jobs j
+	LEFT JOIN applications a 
+      ON a.job_id = j.id 
+      AND a.user_id = ?
+	ORDER BY j.created_at DESC
 	LIMIT ? OFFSET ?;
 	`
 
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
 
-	rows, err := jm.DB.QueryContext(ctx, stmt, filter.Limit(), filter.Offset())
+	rows, err := jm.DB.QueryContext(ctx, stmt, userID, userID, filter.Limit(), filter.Offset())
 	if err != nil {
 		return nil, pagination.Metadata{}, fmt.Errorf("job model getjobs: %w", err)
 	}
@@ -84,7 +90,7 @@ func (jm *JobModel) GetJobs(filter pagination.Filter) ([]Job, pagination.Metadat
 
 	for rows.Next() {
 		var job Job
-		args := []any{&totalRecords, &job.ID, &job.Title, &job.Link, &job.Source, &job.Type, &job.CreatedAt, &job.Company}
+		args := []any{&totalRecords, &job.ID, &job.Title, &job.Link, &job.Source, &job.Type, &job.CreatedAt, &job.Company, &job.Applied}
 
 		if err := rows.Scan(args...); err != nil {
 			return nil, pagination.Metadata{}, err
