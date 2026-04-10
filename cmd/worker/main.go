@@ -54,6 +54,11 @@ func (app *application) run() {
 		scraper.SearchGupy,
 	}
 
+	discordTags := map[string]string{"fullstack": "1474432205618024600",
+		"backend":  "1474432653716623554",
+		"geral":    "1474434286135279699",
+		"frontend": "1474433746936664367"}
+
 	for _, search := range sources {
 		wg.Go(func() {
 			err := search(jobChannel)
@@ -74,7 +79,9 @@ func (app *application) run() {
 			continue
 		}
 
-		msg := []byte("Nova vaga: " + job.Title + "\n" + "Fonte: " + job.Source + "\n" + job.Link)
+		tag := fmt.Sprintf("<@&%s>", discordTags[job.Type])
+
+		msg := []byte("Nova vaga: " + job.Title + "\n" + "Fonte: " + job.Source + "\n" + tag + "\n" + job.Link)
 		subject := "vagas." + job.Type
 
 		err := app.Nc.Publish(subject, msg)
