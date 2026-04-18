@@ -31,7 +31,7 @@ func isTechInternship(jobTitle string) bool {
 		"frontend", "front", "front end", "mobile", "android", "ios", "web", "back end", "computação",
 		"desenvolvedor", "developer", "programador", "engenheiro", "engineer", "arquiteto", "sistemas", "programação",
 		"data", "machine learning", "ia", "ai", "analytics", "dev",
-		"cloud",
+		"cloud","qa", "testes","teste",
 	}
 	for _, keyword := range words {
 		isTech = slices.Contains(keywords, keyword)
