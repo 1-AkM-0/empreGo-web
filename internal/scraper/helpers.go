@@ -7,6 +7,9 @@ import (
 )
 
 func isTechInternship(jobTitle string) bool {
+
+	blacklist := []string{"marketing", "negócios", "growth", "contabilidade", "civil", "customer", "vendas", "videomaker", "suporte operacional", "suporte comercial", "cro", "comercial", "monetização", "cx", "desenvolvimento comercial"}
+
 	jobTitle = strings.ToLower(jobTitle)
 	re := regexp.MustCompile(`[\- :,()]`)
 	cleanString := re.ReplaceAllString(jobTitle, " ")
@@ -14,6 +17,12 @@ func isTechInternship(jobTitle string) bool {
 	keywordsIntership := []string{"estágio", "estagio", "estagiário", "estagiario", "estagiária", "estagiaria", "intern", "internship"}
 	isInternship := false
 	isTech := false
+
+	for _, keyword := range words {
+		if slices.Contains(blacklist, keyword) {
+			return false
+		}
+	}
 
 	for _, keyword := range words {
 		if slices.Contains(keywordsIntership, keyword) {
@@ -31,7 +40,7 @@ func isTechInternship(jobTitle string) bool {
 		"frontend", "front", "front end", "mobile", "android", "ios", "web", "back end", "computação",
 		"desenvolvedor", "developer", "programador", "engenheiro", "engineer", "arquiteto", "sistemas", "programação",
 		"data", "machine learning", "ia", "ai", "analytics", "dev",
-		"cloud","qa", "testes","teste",
+		"cloud", "qa", "testes", "teste",
 	}
 	for _, keyword := range words {
 		isTech = slices.Contains(keywords, keyword)
